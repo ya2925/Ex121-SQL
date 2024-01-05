@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -18,14 +19,14 @@ public class AddGrade extends AppCompatActivity {
 
     SQLiteDatabase db;
     HelperDB hlp;
-    int colName, colId;
-    Cursor crs;
+    int gradeID;
     ArrayList<String> students;
     ArrayList<Integer> studentsId;
     ArrayAdapter<String> adpStudents;
     ArrayAdapter<Integer> adpQuarter;
     Spinner spinnerStudent, spinnerQuarter;
     EditText editTextSubject, editTextTypeOfGrade, editTextGrade;
+    Switch is_grade_active;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,22 +34,11 @@ public class AddGrade extends AppCompatActivity {
         setContentView(R.layout.activity_add_grade);
 
         hlp = new HelperDB(this);
-        db = hlp.getWritableDatabase();
 
-        // get a arrayList of all the students and an arrayList of all the student KEY_ID so that the same index will be the same student
-        crs = db.query(Student.TABLE_STUDENTS, null, null, null, null, null, null);
-        crs.moveToFirst();
-        colName = crs.getColumnIndex(Student.NAME);
-        colId = crs.getColumnIndex(Student.KEY_ID);
-        students = new ArrayList<String>();
-        studentsId = new ArrayList<Integer>();
-        while (!crs.isAfterLast()) {
-            students.add(crs.getString(colName));
-            studentsId.add(crs.getInt(colId));
-            crs.moveToNext();
-        }
-        crs.close();
-        db.close();
+        students = hlp.getStudents();
+        studentsId = hlp.getStudentsId();
+
+
 
 
         // connect the java to the xml file
@@ -57,6 +47,8 @@ public class AddGrade extends AppCompatActivity {
         editTextSubject = (EditText) findViewById(R.id.editTextSubject);
         editTextTypeOfGrade = (EditText) findViewById(R.id.editTextTypeOfGrade);
         editTextGrade = (EditText) findViewById(R.id.editTextGrade);
+        is_grade_active = (Switch) findViewById(R.id.is_grade_active);
+        is_grade_active.setVisibility(View.GONE);
 
 
         adpStudents = new ArrayAdapter<String>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, students);
@@ -64,9 +56,32 @@ public class AddGrade extends AppCompatActivity {
         adpQuarter = new ArrayAdapter<Integer>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, new Integer[]{1, 2, 3, 4});
         spinnerQuarter.setAdapter(adpQuarter);
 
+        gradeID = getIntent().getIntExtra("grade_id", -1);
+        if (gradeID != -1) {
+            is_grade_active.setVisibility(View.VISIBLE);
+            db = hlp.getReadableDatabase();
+            String[] columns = {Grade.STUDENT_ID, Grade.SUBJECT, Grade.TYPE_OF_GRADE, Grade.GRADE, Grade.QUARTER, Grade.IS_GRADE_ACTIVE};
+            String where = Grade.KEY_ID_GRADE + " = ?";
+            String[] args = {"" + gradeID};
+            Cursor crs = db.query(Grade.TABLE_GRADES, columns, where, args, null, null, null);
+            crs.moveToFirst();
+            editTextSubject.setText(crs.getString(1));
+            editTextTypeOfGrade.setText(crs.getString(2));
+            editTextGrade.setText("" + crs.getInt(3));
+            spinnerQuarter.setSelection(crs.getInt(4) - 1);
+            spinnerStudent.setSelection(studentsId.indexOf(crs.getInt(0)));
+            is_grade_active.setChecked(crs.getInt(5) == 1);
+            crs.close();
+            db.close();
+        }
+
     }
 
     public void addGrade(View v) {
+        // check if the grade is valid
+        if (!isValidGrade(editTextGrade.getText().toString())) {
+            return;
+        }
         db = hlp.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(Grade.STUDENT_ID, studentsId.get(spinnerStudent.getSelectedItemPosition()));
@@ -74,10 +89,34 @@ public class AddGrade extends AppCompatActivity {
         cv.put(Grade.TYPE_OF_GRADE, editTextTypeOfGrade.getText().toString());
         cv.put(Grade.GRADE, Integer.parseInt(editTextGrade.getText().toString()));
         cv.put(Grade.QUARTER, spinnerQuarter.getSelectedItemPosition() + 1);
-        db.insert(Grade.TABLE_GRADES, null, cv);
-        db.close();
+        if (gradeID != -1) {
+            cv.put(Grade.IS_GRADE_ACTIVE, is_grade_active.isChecked());
+            db.update(Grade.TABLE_GRADES, cv, Grade.KEY_ID_GRADE+"="+gradeID, null);
+            db.close();
+            Toast.makeText(this, "Grade was updated", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        } else {
+            cv.put(Grade.IS_GRADE_ACTIVE, 1);
+            db.insert(Grade.TABLE_GRADES, null, cv);
+            db.close();
+            // create a toast that will tell the user that the grade was added
+            Toast.makeText(this, "Grade was added", Toast.LENGTH_SHORT).show();
+        }
+    }
 
-        // create a toast that will tell the user that the grade was added
-        Toast.makeText(this, "Grade was added", Toast.LENGTH_SHORT).show();
+    public boolean isValidGrade(String grade) {
+        // check if is a empty string by length or by ""
+        if (grade.length() == 0 || grade.equals("")) {
+            Toast.makeText(this, "you must enter a grade", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        // check if the grade is between 0-100
+        int gradeInt = Integer.parseInt(grade);
+        if (gradeInt < 0 || gradeInt > 100) {
+            Toast.makeText(this, "the grade must be between 0-100", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
     }
 }

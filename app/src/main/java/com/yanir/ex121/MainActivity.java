@@ -51,4 +51,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, AddGrade.class));
     }
 
+    public void goToShowData(View v) {
+        startActivity(new Intent(this, show_data.class));
+    }
+
+
+
 }

@@ -4,9 +4,13 @@ import static com.yanir.ex121.Student.*;
 import static com.yanir.ex121.Grade.*;
 
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import java.util.ArrayList;
 
 public class HelperDB extends SQLiteOpenHelper {
 
@@ -47,7 +51,8 @@ public class HelperDB extends SQLiteOpenHelper {
         strCreate+=" "+SUBJECT+" TEXT,";
         strCreate+=" "+TYPE_OF_GRADE+" TEXT,";
         strCreate+=" "+GRADE+" INTEGER,";
-        strCreate+=" "+QUARTER+" INTEGER";
+        strCreate+=" "+QUARTER+" INTEGER,";
+        strCreate+=" "+IS_GRADE_ACTIVE+" INTEGER";
         strCreate+=");";
         db.execSQL(strCreate);
     }
@@ -66,7 +71,8 @@ public class HelperDB extends SQLiteOpenHelper {
     {
         SQLiteDatabase db = getReadableDatabase();
         String[] columns = {KEY_ID};
-        int count = db.query(TABLE_STUDENTS, columns, null, null, null, null, null).getCount();
+        // get the number of rows in the table with is_active = 1
+        int count = db.query(TABLE_STUDENTS, columns, ACTIVE+"=1", null, null, null, null).getCount();
         db.close();
         return count;
     }
@@ -79,6 +85,150 @@ public class HelperDB extends SQLiteOpenHelper {
         db.close();
         return count;
     }
+
+    public ArrayList<String> getStudents()
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {NAME};
+        ArrayList<String> students = new ArrayList<String>();
+        Cursor crs = db.query(TABLE_STUDENTS, columns, null, null, null, null, null);
+        crs.moveToFirst();
+        int colName = crs.getColumnIndex(NAME);
+        while (!crs.isAfterLast()) {
+            students.add(crs.getString(colName));
+            crs.moveToNext();
+        }
+        crs.close();
+        db.close();
+
+    // print the arraylist
+        for (int i = 0; i < students.size(); i++) {
+            System.out.println(students.get(i));
+        }
+
+        return students;
+    }
+
+    public ArrayList<Integer> getStudentsId() {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {KEY_ID};
+        ArrayList<Integer> studentsId = new ArrayList<Integer>();
+        Cursor crs = db.query(TABLE_STUDENTS, columns, null, null, null, null, null);
+        crs.moveToFirst();
+        int colId = crs.getColumnIndex(KEY_ID);
+        while (!crs.isAfterLast()) {
+            studentsId.add(crs.getInt(colId));
+            crs.moveToNext();
+        }
+        crs.close();
+        db.close();
+        return studentsId;
+    }
+
+    public ArrayList<ArrayList<String>> getGrades(int studentId)
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {SUBJECT, TYPE_OF_GRADE, GRADE, QUARTER};
+        ArrayList<ArrayList<String>> grades = new ArrayList<ArrayList<String>>();
+        Cursor crs = db.query(TABLE_GRADES, columns, STUDENT_ID+"="+studentId, null, null, null, null);
+        crs.moveToFirst();
+        int colSubject = crs.getColumnIndex(SUBJECT);
+        int colTypeOfGrade = crs.getColumnIndex(TYPE_OF_GRADE);
+        int colGrade = crs.getColumnIndex(GRADE);
+        int colQuarter = crs.getColumnIndex(QUARTER);
+        // screate 3 arrays for the 3 columns
+        ArrayList<String> subject = new ArrayList<String>();
+        ArrayList<String> typeOfGrade = new ArrayList<String>();
+        ArrayList<String> grade = new ArrayList<String>();
+        // add the data to the arrays
+        while (!crs.isAfterLast()) {
+            subject.add(crs.getString(colTypeOfGrade));
+            typeOfGrade.add(crs.getString(colSubject) + " - " + crs.getString(colQuarter));
+            grade.add(crs.getString(colGrade));
+            crs.moveToNext();
+        }
+        // add the arrays to the grades arraylist
+        grades.add(subject);
+        grades.add(typeOfGrade);
+        grades.add(grade);
+
+        crs.close();
+        db.close();
+
+        return grades;
+    }
+    public ArrayList<Integer> getGradesId(int studentId) {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {KEY_ID_GRADE};
+        ArrayList<Integer> gradesId = new ArrayList<Integer>();
+        Cursor crs = db.query(TABLE_GRADES, columns, STUDENT_ID+"="+studentId, null, null, null, null);
+        crs.moveToFirst();
+        int colId = crs.getColumnIndex(KEY_ID_GRADE);
+        while (!crs.isAfterLast()) {
+            gradesId.add(crs.getInt(colId));
+            crs.moveToNext();
+        }
+        crs.close();
+        db.close();
+        return gradesId;
+    }
+
+    public void deleteOrActiveStudent(int studentId)
+    {
+        // delete by changing the active value to 0 with db.update
+        ContentValues cv = new ContentValues();
+        if (isStudentActive(studentId)) {
+            cv.put(ACTIVE, 0);
+        }
+        else
+        {
+            cv.put(ACTIVE, 1);
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.update(TABLE_STUDENTS, cv, KEY_ID+"="+studentId, null);
+        db.close();
+    }
+
+    public void deleteOrActiveGrade(int gradeId)
+    {
+        ContentValues cv = new ContentValues();
+        if (isGradeActive(gradeId)) {
+            cv.put(IS_GRADE_ACTIVE, 0);
+        }
+        else
+        {
+            cv.put(IS_GRADE_ACTIVE, 1);
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.update(TABLE_GRADES, cv, KEY_ID_GRADE+"="+gradeId, null);
+        db.close();
+    }
+
+    public boolean isStudentActive(int studentId) {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {ACTIVE};
+        Cursor crs = db.query(TABLE_STUDENTS, columns, KEY_ID+"="+studentId, null, null, null, null);
+        crs.moveToFirst();
+        int colActive = crs.getColumnIndex(ACTIVE);
+        boolean isActive = crs.getInt(colActive) == 1;
+        crs.close();
+        db.close();
+        return isActive;
+    }
+
+    public boolean isGradeActive(int gradeId) {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {IS_GRADE_ACTIVE};
+        Cursor crs = db.query(TABLE_GRADES, columns, KEY_ID_GRADE+"="+gradeId, null, null, null, null);
+        crs.moveToFirst();
+        int colActive = crs.getColumnIndex(IS_GRADE_ACTIVE);
+        boolean isActive = crs.getInt(colActive) == 1;
+        crs.close();
+        db.close();
+        return isActive;
+    }
+
+
 
 }
 

@@ -8,5 +8,6 @@ public class Grade {
     public static final String TYPE_OF_GRADE = "TypeOfGrade";
     public static final String GRADE = "Grade";
     public static final String QUARTER = "Quarter";
+    public static final String IS_GRADE_ACTIVE = "IsGradeActive";
 
 }

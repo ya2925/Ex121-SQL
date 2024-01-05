@@ -107,6 +107,13 @@
             android:layout_height="wrap_content"
             android:inputType="phone" />
 
+        <Switch
+            android:id="@+id/is_active"
+            android:layout_width="141dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:text="Is Active:" />
+
     </LinearLayout>
 
     <Button

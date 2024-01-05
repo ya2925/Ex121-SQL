@@ -99,7 +99,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:background="#4CAF50"
-        android:onClick="goToAddGrade"
+        android:onClick="goToShowData"
         android:text="Show Students"
         android:textColor="#ffffff" />
 
