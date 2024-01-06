@@ -106,9 +106,10 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Filter Students"
         android:layout_marginTop="8dp"
-        android:textColor="#ffffff"
-        android:background="#FFC107"/>
+        android:background="#FFC107"
+        android:onClick="goToSorting"
+        android:text="Filter Students"
+        android:textColor="#ffffff" />
 
 </LinearLayout>

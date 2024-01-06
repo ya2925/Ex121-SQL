@@ -55,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, show_data.class));
     }
 
-
+    public void goToSorting(View v) {
+        startActivity(new Intent(this, sorting.class));
+    }
 
 }

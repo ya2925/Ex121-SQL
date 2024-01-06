@@ -42,7 +42,7 @@ public class AddStudent extends AppCompatActivity {
         switchActive.setVisibility(View.GONE);
 
 
-
+        // connect the java to the database
         hlp = new HelperDB(this);
         db = hlp.getWritableDatabase();
         db.close();
@@ -79,7 +79,10 @@ public class AddStudent extends AppCompatActivity {
 
     }
 
-    // a func for a button that adds a student to the db
+    /**
+     * add/update a student to the database
+     * @param v the view - button
+     */
     public void addStudent(View v)
     {
         //check if the user entered at least a name

@@ -67,6 +67,10 @@ public class HelperDB extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    /**
+     * this function counts the number of active students in the db
+     * @return the number of active students
+     */
     public int getStudentCount()
     {
         SQLiteDatabase db = getReadableDatabase();
@@ -77,15 +81,35 @@ public class HelperDB extends SQLiteOpenHelper {
         return count;
     }
 
+    /**
+     * this function counts the number of active grades in the db
+     * @return the number of active grades
+     */
     public int getGradeCount()
     {
         SQLiteDatabase db = getReadableDatabase();
-        String[] columns = {KEY_ID_GRADE};
-        int count = db.query(TABLE_GRADES, columns, null, null, null, null, null).getCount();
+        String[] columns = {STUDENT_ID};
+        // get all the students if of an active grade
+        Cursor crs = db.query(TABLE_GRADES, columns, IS_GRADE_ACTIVE+"=1", null, null, null, null);
+        // check if the student is active if not then dont count it
+        int count = 0;
+        crs.moveToFirst();
+        int colStudentId = crs.getColumnIndex(STUDENT_ID);
+        while (!crs.isAfterLast()) {
+            if (isStudentActive(crs.getInt(colStudentId))) {
+                count++;
+            }
+            crs.moveToNext();
+        }
+        crs.close();
         db.close();
         return count;
     }
 
+    /**
+     * this function return an arraylist of all the students names in the db
+     * @return an arraylist of all the students names in the db
+     */
     public ArrayList<String> getStudents()
     {
         SQLiteDatabase db = getReadableDatabase();
@@ -101,14 +125,13 @@ public class HelperDB extends SQLiteOpenHelper {
         crs.close();
         db.close();
 
-    // print the arraylist
-        for (int i = 0; i < students.size(); i++) {
-            System.out.println(students.get(i));
-        }
-
         return students;
     }
 
+    /**
+     * this function return an arraylist of all the students id in the db
+     * @return an arraylist of all the students id in the db
+     */
     public ArrayList<Integer> getStudentsId() {
         SQLiteDatabase db = getReadableDatabase();
         String[] columns = {KEY_ID};
@@ -125,6 +148,30 @@ public class HelperDB extends SQLiteOpenHelper {
         return studentsId;
     }
 
+    /**
+     * this function takes a student id and return the student name
+     * @param studentId the student id
+     * @return the student name
+     */
+    public String getStudentName(int studentId) {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {NAME};
+        Cursor crs = db.query(TABLE_STUDENTS, columns, KEY_ID+"="+studentId, null, null, null, null);
+        crs.moveToFirst();
+        int colName = crs.getColumnIndex(NAME);
+        String name = crs.getString(colName);
+        crs.close();
+        db.close();
+        return name;
+    }
+
+    /**
+     * this function takes a student id and return an arraylist of all the student in the array list there are 3 lists, list of grades, list of types and list of subjects and quarter
+     * every index will coralate to the same index in the other lists
+     * so when you have a grade at index 1 then the subject and quarter will be at index 1 in the other lists and also the type of grade
+     * @param studentId the student id
+     * @return an arraylist of all the student in the array list there are 3 lists, list of grades, list of types and list of subjects and quarter
+     */
     public ArrayList<ArrayList<String>> getGrades(int studentId)
     {
         SQLiteDatabase db = getReadableDatabase();
@@ -143,7 +190,7 @@ public class HelperDB extends SQLiteOpenHelper {
         // add the data to the arrays
         while (!crs.isAfterLast()) {
             subject.add(crs.getString(colTypeOfGrade));
-            typeOfGrade.add(crs.getString(colSubject) + " - " + crs.getString(colQuarter));
+            typeOfGrade.add(crs.getString(colSubject) + " - quarter " + crs.getString(colQuarter));
             grade.add(crs.getString(colGrade));
             crs.moveToNext();
         }
@@ -157,6 +204,12 @@ public class HelperDB extends SQLiteOpenHelper {
 
         return grades;
     }
+
+    /**
+     * this function takes a student id and return an arraylist of all the grades id of the student
+     * @param studentId the student id
+     * @return an arraylist of all the grades id of the student
+     */
     public ArrayList<Integer> getGradesId(int studentId) {
         SQLiteDatabase db = getReadableDatabase();
         String[] columns = {KEY_ID_GRADE};
@@ -173,6 +226,10 @@ public class HelperDB extends SQLiteOpenHelper {
         return gradesId;
     }
 
+    /**
+     * this function takes a student id and change the active value to 0 or 1 depending on the current value
+     * @param studentId the student id
+     */
     public void deleteOrActiveStudent(int studentId)
     {
         // delete by changing the active value to 0 with db.update
@@ -189,6 +246,10 @@ public class HelperDB extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * this function takes a grade id and change the active value to 0 or 1 depending on the current value
+     * @param gradeId the grade id
+     */
     public void deleteOrActiveGrade(int gradeId)
     {
         ContentValues cv = new ContentValues();
@@ -204,6 +265,11 @@ public class HelperDB extends SQLiteOpenHelper {
         db.close();
     }
 
+    /**
+     * this function takes a student id and return true if the student is active and false if not
+     * @param studentId
+     * @return
+     */
     public boolean isStudentActive(int studentId) {
         SQLiteDatabase db = getReadableDatabase();
         String[] columns = {ACTIVE};
@@ -216,6 +282,11 @@ public class HelperDB extends SQLiteOpenHelper {
         return isActive;
     }
 
+    /**
+     * this function takes a grade id and return true if the grade is active and false if not
+     * @param gradeId
+     * @return
+     */
     public boolean isGradeActive(int gradeId) {
         SQLiteDatabase db = getReadableDatabase();
         String[] columns = {IS_GRADE_ACTIVE};
@@ -228,6 +299,187 @@ public class HelperDB extends SQLiteOpenHelper {
         return isActive;
     }
 
+    /**
+     * this functiom return an arraylist of all the subjects in the db
+     * @return
+     */
+    public ArrayList<String> getSubjects()
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {SUBJECT};
+        ArrayList<String> subjects = new ArrayList<String>();
+        Cursor crs = db.query(TABLE_GRADES, columns, null, null, null, null, null);
+        crs.moveToFirst();
+        int colSubject = crs.getColumnIndex(SUBJECT);
+        while (!crs.isAfterLast()) {
+            subjects.add(crs.getString(colSubject));
+            crs.moveToNext();
+        }
+        crs.close();
+        db.close();
+
+        // remove duplicates
+        for (int i = 0; i < subjects.size(); i++) {
+            for (int j = i+1; j < subjects.size(); j++) {
+                if(subjects.get(i).equals(subjects.get(j))){
+                    subjects.remove(j);
+                    j--;
+                }
+            }
+        }
+        return subjects;
+    }
+
+    /**
+     * this function return an arraylist of all the grades of the subject the arraylist will contain 3 arraylists, one for the student name, one for the type of grade and one for the grade
+     * every index will coralate to the same index in the other arraylists
+     * so when you have a grade at index 1 then the student name and type of grade will be at index 1 in the other arraylists
+     * @param subject the subject
+     * @return an arraylist of all the grades of the subject the arraylist will contain 3 arraylists, one for the student name, one for the type of grade and one for the grade
+     */
+    public ArrayList<ArrayList<String>> getGradesInSubject(String subject)
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {STUDENT_ID, TYPE_OF_GRADE, GRADE, QUARTER};
+        ArrayList<ArrayList<String>> grades = new ArrayList<ArrayList<String>>();
+        // get all the grades with the subject and that are active
+        Cursor crs = db.query(TABLE_GRADES, columns , SUBJECT+"='"+subject+"' AND "+IS_GRADE_ACTIVE+"=1", null, null, null, null);
+        crs.moveToFirst();
+        int colStudentId = crs.getColumnIndex(STUDENT_ID);
+        int colTypeOfGrade = crs.getColumnIndex(TYPE_OF_GRADE);
+        int colGrade = crs.getColumnIndex(GRADE);
+        int colQuarter = crs.getColumnIndex(QUARTER);
+        // screate 3 arrays for the 3 columns
+        ArrayList<String> studentId = new ArrayList<String>();
+        ArrayList<String> typeOfGrade = new ArrayList<String>();
+        ArrayList<String> grade = new ArrayList<String>();
+        // add the data to the arrays
+        while (!crs.isAfterLast()) {
+            // check if the student is active
+            if (isStudentActive(crs.getInt(colStudentId))) {
+                studentId.add(getStudentName(crs.getInt(colStudentId)));
+                typeOfGrade.add(crs.getString(colTypeOfGrade) + " - quarter " + crs.getString(colQuarter));
+                grade.add(crs.getString(colGrade));
+            }
+            crs.moveToNext();
+        }
+        // add the arrays to the grades arraylist
+        grades.add(studentId);
+        grades.add(typeOfGrade);
+        grades.add(grade);
+
+        crs.close();
+        db.close();
+
+        return grades;
+    }
+
+
+    /**
+     * this function takes a student id and return the average of the student
+     * @param studentId the student id
+     * @return the average of the student
+     */
+    public double getStudentAverage(int studentId){
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {GRADE};
+        // get all the active grades of the student
+        Cursor crs = db.query(TABLE_GRADES, columns , STUDENT_ID+"="+studentId+" AND "+IS_GRADE_ACTIVE+"=1", null, null, null, null);
+        crs.moveToFirst();
+        int colGrade = crs.getColumnIndex(GRADE);
+        double sum = 0;
+        int count = 0;
+        while (!crs.isAfterLast()) {
+            sum += crs.getInt(colGrade);
+            count++;
+            crs.moveToNext();
+        }
+        crs.close();
+        db.close();
+        if (count == 0) {
+            return 0;
+        }
+        return sum/count;
+    }
+
+    /**
+     * this function return an arraylist of all the students average in the db
+     * @return an arraylist of all the students average in the db
+     */
+    public ArrayList<String> getStudentsAverage(){
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {KEY_ID};
+        // get all the students id of active students
+        Cursor crs = db.query(TABLE_STUDENTS, columns , ACTIVE+"=1", null, null, null, null);
+        crs.moveToFirst();
+        int colId = crs.getColumnIndex(KEY_ID);
+        ArrayList<String> studentsAverage = new ArrayList<String>();
+        while (!crs.isAfterLast()) {
+            studentsAverage.add(getStudentName(crs.getInt(colId)) + " - " + getStudentAverage(crs.getInt(colId)));
+            crs.moveToNext();
+        }
+        crs.close();
+        db.close();
+
+        // sort the arraylist
+        for (int i = 0; i < studentsAverage.size(); i++) {
+            for (int j = i+1; j < studentsAverage.size(); j++) {
+                if(Double.parseDouble(studentsAverage.get(i).substring(studentsAverage.get(i).indexOf("-")+2)) < Double.parseDouble(studentsAverage.get(j).substring(studentsAverage.get(j).indexOf("-")+2))){
+                    String temp = studentsAverage.get(i);
+                    studentsAverage.set(i, studentsAverage.get(j));
+                    studentsAverage.set(j, temp);
+                }
+            }
+        }
+
+        return studentsAverage;
+    }
+
+    /**
+     * this function return an arraylist of all the grades of the quarter the arraylist will contain 4 arraylists, one for the student name, one for the subject, one for the type of grade and one for the grade
+     * every index will coralate to the same index in the other arraylists
+     * @param quarter
+     * @return
+     */
+    public ArrayList<ArrayList<String>> getGradesInQuarter(int quarter)
+    {
+        SQLiteDatabase db = getReadableDatabase();
+        String[] columns = {STUDENT_ID, SUBJECT, TYPE_OF_GRADE, GRADE};
+        ArrayList<ArrayList<String>> grades = new ArrayList<ArrayList<String>>();
+        // get all the grades with the subject and that are active
+        Cursor crs = db.query(TABLE_GRADES, columns , QUARTER+"="+quarter+" AND "+IS_GRADE_ACTIVE+"=1", null, null, null, null);
+        crs.moveToFirst();
+        int colStudentId = crs.getColumnIndex(STUDENT_ID);
+        int colSubject = crs.getColumnIndex(SUBJECT);
+        int colTypeOfGrade = crs.getColumnIndex(TYPE_OF_GRADE);
+        int colGrade = crs.getColumnIndex(GRADE);
+        // screate 3 arrays for the 3 columns
+        ArrayList<String> studentId = new ArrayList<String>();
+        ArrayList<String> subject = new ArrayList<String>();
+        ArrayList<String> typeOfGrade = new ArrayList<String>();
+        ArrayList<String> grade = new ArrayList<String>();
+        // add the data to the arrays
+        while (!crs.isAfterLast()) {
+            // check if the student is active
+            if (isStudentActive(crs.getInt(colStudentId))) {
+                studentId.add(getStudentName(crs.getInt(colStudentId)));
+                subject.add(crs.getString(colSubject));
+                typeOfGrade.add(crs.getString(colTypeOfGrade));
+                grade.add(crs.getString(colGrade));
+            }
+            crs.moveToNext();
+        }
+        // add the arrays to the grades arraylist
+        grades.add(studentId);
+        grades.add(subject);
+        grades.add(typeOfGrade);
+        grades.add(grade);
+
+        crs.close();
+        db.close();
+
+        return grades;
+    }
 
 
 }

@@ -51,13 +51,17 @@ public class AddGrade extends AppCompatActivity {
         is_grade_active.setVisibility(View.GONE);
 
 
+        // create an adapter for the spinners
         adpStudents = new ArrayAdapter<String>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, students);
         spinnerStudent.setAdapter(adpStudents);
         adpQuarter = new ArrayAdapter<Integer>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, new Integer[]{1, 2, 3, 4});
         spinnerQuarter.setAdapter(adpQuarter);
 
+
+        // check if the user want to edit a grade instead of adding a new one
         gradeID = getIntent().getIntExtra("grade_id", -1);
         if (gradeID != -1) {
+            // if they dose, show the is_grade_active switch and set the values of the grade to the editTexts
             is_grade_active.setVisibility(View.VISIBLE);
             db = hlp.getReadableDatabase();
             String[] columns = {Grade.STUDENT_ID, Grade.SUBJECT, Grade.TYPE_OF_GRADE, Grade.GRADE, Grade.QUARTER, Grade.IS_GRADE_ACTIVE};
@@ -77,6 +81,10 @@ public class AddGrade extends AppCompatActivity {
 
     }
 
+    /**
+     * add/update a grade to the database
+     * @param v the view - button
+     */
     public void addGrade(View v) {
         // check if the grade is valid
         if (!isValidGrade(editTextGrade.getText().toString())) {
@@ -89,7 +97,9 @@ public class AddGrade extends AppCompatActivity {
         cv.put(Grade.TYPE_OF_GRADE, editTextTypeOfGrade.getText().toString());
         cv.put(Grade.GRADE, Integer.parseInt(editTextGrade.getText().toString()));
         cv.put(Grade.QUARTER, spinnerQuarter.getSelectedItemPosition() + 1);
+        // check if the user want to edit a grade instead of adding a new one
         if (gradeID != -1) {
+            // if they dose, update the grade in the database
             cv.put(Grade.IS_GRADE_ACTIVE, is_grade_active.isChecked());
             db.update(Grade.TABLE_GRADES, cv, Grade.KEY_ID_GRADE+"="+gradeID, null);
             db.close();
@@ -97,6 +107,7 @@ public class AddGrade extends AppCompatActivity {
             finish();
             return;
         } else {
+            // if not add the grade to the database
             cv.put(Grade.IS_GRADE_ACTIVE, 1);
             db.insert(Grade.TABLE_GRADES, null, cv);
             db.close();
@@ -105,6 +116,11 @@ public class AddGrade extends AppCompatActivity {
         }
     }
 
+    /**
+     * check if the grade is valid
+     * @param grade the grade to check
+     * @return true if the grade is valid, false otherwise
+     */
     public boolean isValidGrade(String grade) {
         // check if is a empty string by length or by ""
         if (grade.length() == 0 || grade.equals("")) {

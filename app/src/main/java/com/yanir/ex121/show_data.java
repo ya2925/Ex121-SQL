@@ -3,8 +3,6 @@ package com.yanir.ex121;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,8 +28,8 @@ public class show_data extends AppCompatActivity implements View.OnCreateContext
         setContentView(R.layout.activity_show_data);
 
         // connect the java spinner and listView to the xml file
-        studentsOrGrades = (Spinner) findViewById(R.id.studentsOrGrade);
-        chooseStudent = (Spinner) findViewById(R.id.chooseStudent);
+        studentsOrGrades = (Spinner) findViewById(R.id.typeOfSorting);
+        chooseStudent = (Spinner) findViewById(R.id.additionalData);
         listView = (ListView) findViewById(R.id.listView);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, new String[]{"Students", "Grades"});
