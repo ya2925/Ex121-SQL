@@ -3,67 +3,20 @@ package com.yanir.ex121;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.ContentValues;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
-
-    HelperDB hlp;
-    TextView textTotalStudents, textTotalGrades;
+public class credits extends AppCompatActivity {
     Intent in;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        // connect the TextViews to the xml file
-        textTotalStudents = (TextView) findViewById(R.id.textTotalStudents);
-        textTotalGrades = (TextView) findViewById(R.id.textTotalGrades);
-
-
-        hlp = new HelperDB(this);
-
-        // update the TextViews with the total number of students and grades
-        textTotalStudents.setText("" + hlp.getStudentCount());
-        textTotalGrades.setText("" + hlp.getGradeCount());
-
+        setContentView(R.layout.activity_credits);
         in = getIntent();
     }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-
-        // update the TextViews with the total number of students and grades
-        textTotalStudents.setText("" + hlp.getStudentCount());
-        textTotalGrades.setText("" + hlp.getGradeCount());
-    }
-
-    //a func for a button that will start an activity
-    public void goToAddStudent(View v) {
-        startActivity(new Intent(this, AddStudent.class));
-    }
-    public void goToAddGrade(View v) {
-        startActivity(new Intent(this, AddGrade.class));
-    }
-
-    public void goToShowData(View v) {
-        startActivity(new Intent(this, show_data.class));
-    }
-
-    public void goToSorting(View v) {
-        startActivity(new Intent(this, sorting.class));
-    }
-
 
     /**
      * This function presents the options menu for moving between activities.
@@ -105,5 +58,4 @@ public class MainActivity extends AppCompatActivity {
         in.setClass(this, MainActivity.class);
         return super.onOptionsItemSelected(item);
     }
-
 }

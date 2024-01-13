@@ -1,11 +1,16 @@
 package com.yanir.ex121;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,6 +25,7 @@ public class AddStudent extends AppCompatActivity {
     int studentID;
     Button addStudent;
     Switch switchActive;
+    Intent in;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,8 +81,7 @@ public class AddStudent extends AppCompatActivity {
             addStudent.setText("Update Student");
         }
 
-
-
+        in = getIntent();
     }
 
     /**
@@ -92,6 +97,34 @@ public class AddStudent extends AppCompatActivity {
             return;
         }
 
+        // create an alert dialog to make sure the user want to add/update the student
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Alert");
+        boolean isUpdate = studentID != -1;
+        if(isUpdate)
+        {
+            alertDialog.setMessage("Are you sure you want to update the student?");
+        }
+        else
+        {
+            alertDialog.setMessage("Are you sure you want to add the student?");
+        }
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes",
+                (dialog, which) -> {
+                    addToDB();
+                    dialog.dismiss();
+                });
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No",
+                (dialog, which) -> {
+                    dialog.dismiss();
+                    if (isUpdate)
+                        finish();
+                    return;
+                });
+        alertDialog.show();
+    }
+
+    public void addToDB(){
         db = hlp.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(Student.NAME, etName.getText().toString());
@@ -120,6 +153,48 @@ public class AddStudent extends AppCompatActivity {
             // create a tost that says the student was added
             Toast.makeText(this, "Student was added", Toast.LENGTH_SHORT).show();
         }
+    }
+
+
+    /**
+     * This function presents the options menu for moving between activities.
+     * @param menu The options menu in which you place your items.
+     * @return true in order to show the menu, otherwise false.
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu){
+        getMenuInflater().inflate(R.menu.manu, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    public boolean onOptionsItemSelected(@NonNull MenuItem item){
+        if (item.getTitle().toString().equals("Home")){
+            in.setClass(this, MainActivity.class);
+            startActivity(in);
+        }
+        else if (item.getTitle().toString().equals("add student")){
+            in.setClass(this, AddStudent.class);
+            startActivity(in);
+        }
+        else if (item.getTitle().toString().equals("add grade")){
+            in.setClass(this, AddGrade.class);
+            startActivity(in);
+        }
+        else if (item.getTitle().toString().equals("show data")){
+            in.setClass(this, show_data.class);
+            startActivity(in);
+        }
+        else if (item.getTitle().toString().equals("filter data")){
+            in.setClass(this, sorting.class);
+            startActivity(in);
+        }
+        else if (item.getTitle().toString().equals("credits")){
+            in.setClass(this, credits.class);
+            startActivity(in);
+        }
+        in.setClass(this, MainActivity.class);
+        return super.onOptionsItemSelected(item);
     }
 
 }
